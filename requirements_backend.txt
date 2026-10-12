@@ -1,0 +1,9 @@
+# Buddy AI Assistant — Backend Requirements
+# Install: pip install -r requirements_backend.txt
+
+# ── Web Framework ─────────────────────────────────────────────────────────
+flask==3.0.3
+flask-cors==4.0.1
+
+# ── Utilities ─────────────────────────────────────────────────────────────
+python-dotenv==1.0.1

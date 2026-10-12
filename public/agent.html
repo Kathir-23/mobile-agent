@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buddy Mobile Agent</title>
+    <style>
+        :root {
+            --bg: #090d16;
+            --card: #131b2e;
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --text: #f3f4f6;
+            --text-dim: #9ca3af;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 28px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .pulse-orb {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #60a5fa 0%, #2563eb 100%);
+            box-shadow: 0 0 30px rgba(37, 99, 235, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            animation: pulse 2s infinite ease-in-out;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 20px rgba(37, 99, 235, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(37, 99, 235, 0.8); }
+            100% { transform: scale(0.95); box-shadow: 0 0 20px rgba(37, 99, 235, 0.4); }
+        }
+
+        .alarm-mode {
+            animation: alarmPulse 0.4s infinite alternate !important;
+            background: radial-gradient(circle, #f87171 0%, #dc2626 100%) !important;
+        }
+
+        @keyframes alarmPulse {
+            from { transform: scale(1); box-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
+            to { transform: scale(1.15); box-shadow: 0 0 70px rgba(239, 68, 68, 1); }
+        }
+
+        h1 { font-size: 20px; font-weight: 700; color: #ffffff; }
+        p.subtitle { font-size: 13px; color: var(--text-dim); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent); }
+
+        .info-grid {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-dim);
+        }
+
+        .info-input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: right;
+            width: 150px;
+        }
+
+        .battery-slider {
+            width: 100px;
+            accent-color: #10b981;
+        }
+
+        .log-box {
+            width: 100%;
+            height: 90px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #10b981;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .enable-btn {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .enable-btn:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="orb" class="pulse-orb" onclick="enableAudio()">🤖</div>
+
+        <div>
+            <h1>Buddy Mobile Agent</h1>
+            <p class="subtitle">Wireless Remote Controller for Buddy AI</p>
+        </div>
+
+        <div id="statusBadge" class="status-badge">
+            <div class="dot"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+
+        <button id="enableBtn" class="enable-btn" onclick="enableAudio()">Tap to Enable Audio & Beacon</button>
+
+        <div class="info-grid">
+            <div class="info-row">
+                <span>Device Name:</span>
+                <input type="text" id="devModelInput" class="info-input" value="Android Phone" onchange="saveDeviceModel(this.value)">
+            </div>
+            <div class="info-row">
+                <span>Battery Level:</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="range" id="batterySlider" class="battery-slider" min="1" max="100" value="65" oninput="updateBattery(this.value)">
+                    <span id="devBattery" style="color: var(--text); font-weight: 600; min-width: 35px;">65%</span>
+                </div>
+            </div>
+            <div class="info-row">
+                <span>Connection:</span>
+                <span id="devConn" style="color: #10b981; font-weight: 600;">Active Heartbeat</span>
+            </div>
+        </div>
+
+        <div id="logBox" class="log-box">
+            [System] Agent initialized.<br>
+        </div>
+    </div>
+
+    <script>
+        let deviceId = localStorage.getItem("buddy_device_id");
+        if (!deviceId) {
+            deviceId = "phone_" + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem("buddy_device_id", deviceId);
+        }
+
+        let audioEnabled = false;
+        let batteryLevel = parseInt(localStorage.getItem("buddy_battery")) || 65;
+
+        // Custom device model name in localStorage
+        let storedModel = localStorage.getItem("buddy_device_model");
+
+        if (!storedModel) {
+            // Attempt Client Hints API for exact model (e.g. Vivo I2223, Pixel 7)
+            if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+                navigator.userAgentData.getHighEntropyValues(["model"]).then(ua => {
+                    if (ua.model) {
+                        storedModel = ua.model;
+                        document.getElementById("devModelInput").value = storedModel;
+                        localStorage.setItem("buddy_device_model", storedModel);
+                    }
+                }).catch(() => {});
+            }
+            if (!storedModel) {
+                const ua = navigator.userAgent;
+                if (ua.includes("Android")) storedModel = "Android Phone";
+                else if (ua.includes("iPhone")) storedModel = "Apple iPhone";
+                else storedModel = "Mobile Device";
+            }
+        }
+
+        document.getElementById("devModelInput").value = storedModel;
+        document.getElementById("batterySlider").value = batteryLevel;
+        document.getElementById("devBattery").innerText = batteryLevel + "%";
+
+        function saveDeviceModel(val) {
+            storedModel = val || "Mobile Phone";
+            localStorage.setItem("buddy_device_model", storedModel);
+            log(`Device name updated to: ${storedModel}`);
+            sendHeartbeat();
+        }
+
+        function updateBattery(val) {
+            batteryLevel = parseInt(val);
+            document.getElementById("devBattery").innerText = batteryLevel + "%";
+            localStorage.setItem("buddy_battery", batteryLevel);
+            sendHeartbeat();
+        }
+
+        // Native Battery API if supported on HTTPS/localhost
+        if (navigator.getBattery) {
+            navigator.getBattery().then(b => {
+                batteryLevel = Math.round(b.level * 100);
+                document.getElementById("devBattery").innerText = batteryLevel + "%";
+                document.getElementById("batterySlider").value = batteryLevel;
+                b.addEventListener("levelchange", () => {
+                    batteryLevel = Math.round(b.level * 100);
+                    document.getElementById("devBattery").innerText = batteryLevel + "%";
+                    document.getElementById("batterySlider").value = batteryLevel;
+                    sendHeartbeat();
+                });
+            }).catch(() => {});
+        }
+
+        function log(msg) {
+            const box = document.getElementById("logBox");
+            const time = new Date().toLocaleTimeString();
+            box.innerHTML += `[${time}] ${msg}<br>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function enableAudio() {
+            audioEnabled = true;
+            document.getElementById("enableBtn").style.display = "none";
+            log("Audio & Beacon controls activated!");
+            speak("Buddy Mobile Agent is active and ready!");
+        }
+
+        function speak(text) {
+            if (!("speechSynthesis" in window)) return;
+            window.speechSynthesis.cancel();
+            const utt = new SpeechSynthesisUtterance(text);
+            utt.rate = 1.0;
+            utt.pitch = 1.0;
+            window.speechSynthesis.speak(utt);
+        }
+
+        function playAlarmSound() {
+            if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 1000]);
+            
+            const orb = document.getElementById("orb");
+            orb.classList.add("alarm-mode");
+
+            // Web Audio Synth Siren
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(440, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.5);
+                
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 3);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 3);
+            } catch(e) {}
+
+            speak("Finding device! Phone beacon activated!");
+
+            setTimeout(() => {
+                orb.classList.remove("alarm-mode");
+            }, 5000);
+        }
+
+        function executeCommand(cmd) {
+            log(`Received Command: ${cmd.intent} (${cmd.entity || ''})`);
+            const intent = (cmd.intent || '').toUpperCase();
+            const entity = (cmd.entity || '').toLowerCase();
+
+            if (intent === "OPEN_APP") {
+                speak(`Opening ${entity}`);
+                if (entity.includes("youtube")) {
+                    window.location.href = "https://m.youtube.com";
+                } else if (entity.includes("whatsapp")) {
+                    window.location.href = "whatsapp://send";
+                } else if (entity.includes("chrome") || entity.includes("google")) {
+                    window.location.href = "https://www.google.com";
+                } else if (entity.includes("maps")) {
+                    window.location.href = "https://maps.google.com";
+                } else {
+                    speak(`Launching ${entity}`);
+                }
+            }
+            else if (intent === "RING_PHONE") {
+                playAlarmSound();
+            }
+            else if (intent === "SET_VOLUME") {
+                speak("Volume adjusted to maximum!");
+            }
+            else if (intent === "OPEN_URL") {
+                const url = cmd.parameters?.url || entity;
+                speak("Opening website");
+                window.open(url.startsWith("http") ? url : "https://" + url, "_blank");
+            }
+            else if (intent === "LOCK_SCREEN") {
+                speak("Locking screen");
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+            else {
+                speak(`Executing ${intent}`);
+            }
+        }
+
+        // Always use the exact server URL the page was loaded from
+        // This fixes the issue where other phones can't connect
+        const SERVER_BASE = window.location.origin;
+
+        async function sendHeartbeat() {
+            try {
+                const res = await fetch(`${SERVER_BASE}/api/buddy/agent/heartbeat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        device_id: deviceId,
+                        model: storedModel,
+                        battery: batteryLevel,
+                        platform: navigator.platform
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById("statusText").innerText = "Online & Connected";
+                    
+                    if (data.commands && data.commands.length > 0) {
+                        data.commands.forEach(cmd => executeCommand(cmd));
+                    }
+                } else {
+                    document.getElementById("statusText").innerText = "Server Error";
+                }
+            } catch (err) {
+                document.getElementById("statusText").innerText = "Reconnecting...";
+                log(`Connection error: ${err.message}`);
+            }
+        }
+
+        // Heartbeat every 2 seconds
+        setInterval(sendHeartbeat, 2000);
+        sendHeartbeat();
+    </script>
+</body>
+</html>
